@@ -130,9 +130,9 @@ async def check_email(page, email):
             label=domain
         )
 
-        await page.click("button.genbutton")
+        await page.locator("button.genbutton").click(timeout=10000)
 
-        await asyncio.sleep(3)
+await asyncio.sleep(5)
 
         generated = await page.input_value(
             "input.mailtext.mailtextfix"
@@ -191,22 +191,24 @@ async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with async_playwright() as p:
 
         browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-setuid-sandbox"
-            ]
-        )
+    headless=True,
+    args=[
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-blink-features=AutomationControlled"
+    ]
+)
 
-        page = await browser.new_page()
+page = await browser.new_page()
 
-        await page.goto(
-            "https://hi2.in/#/",
-            wait_until="domcontentloaded",
-            timeout=60000
-        )
+await page.goto(
+    "https://hi2.in/#/",
+    wait_until="networkidle",
+    timeout=120000
+)
 
-        await asyncio.sleep(5)
+await asyncio.sleep(8)
 
         for index, email in enumerate(emails, start=1):
 
