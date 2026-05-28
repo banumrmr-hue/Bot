@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 
 from telegram import Update
-from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -16,8 +15,8 @@ from telegram.ext import (
 from playwright.async_api import async_playwright
 
 BOT_TOKEN = os.getenv("BOT_TOKEN") or "YOUR_BOT_TOKEN"
-OWNER = "@c0dealx"
 
+OWNER = "@c0dealx"
 
 WELCOME_TEXT = f"""
 ╔══════════════════╗
@@ -25,7 +24,7 @@ WELCOME_TEXT = f"""
 ╚══════════════════╝
 
 ⚡ Fast & Accurate Checker
-📧 Supports:
+📧 Domains:
 • @hi2.in
 • @telemail.com
 
@@ -34,7 +33,8 @@ WELCOME_TEXT = f"""
 Send emails line-by-line.
 
 Example:
-abc@hi2.in
+
+test@hi2.in
 hello@telemail.com
 """
 
@@ -44,47 +44,49 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    txt = f"""
+    await update.message.reply_text(
+        f"""
 ╔══════════════╗
       COMMANDS
 ╚══════════════╝
 
-/start → Start bot
-/help → Help menu
-/ping → Bot speed
-/about → Bot info
+/start → Start Bot
+/help → Help Menu
+/ping → Bot Speed
+/about → Bot Info
 
-👑 Owner: {OWNER}
+👑 {OWNER}
 """
-
-    await update.message.reply_text(txt)
+    )
 
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    start = datetime.now()
+    start_time = datetime.now()
+
     msg = await update.message.reply_text("⚡ Checking speed...")
-    end = datetime.now()
 
-    ms = (end - start).microseconds / 1000
+    end_time = datetime.now()
 
-    await msg.edit_text(f"⚡ Bot Speed: {ms:.0f} ms")
+    ms = (end_time - start_time).microseconds / 1000
+
+    await msg.edit_text(f"⚡ Speed: {ms:.0f} ms")
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    txt = f"""
+    await update.message.reply_text(
+        f"""
 ╔══════════════════╗
       BOT INFO
 ╚══════════════════╝
 
 🔥 Stylish HI2 Checker
-⚡ Accurate Availability Detection
-📄 CSV Export Supported
-🚀 Fast Processing
+⚡ Accurate Detection
+📄 CSV Export
+🚀 Fast Checking
 
 👑 Owner: {OWNER}
 """
-
-    await update.message.reply_text(txt)
+    )
 
 
 async def check_email(page, email):
@@ -94,26 +96,31 @@ async def check_email(page, email):
         if "@" not in email:
             return {
                 "email": email,
-                "status": "INVALID",
                 "generated": "",
-                "error": "Invalid Email"
+                "status": "INVALID",
+                "error": "Invalid email"
             }
 
         prefix, domain_raw = email.split("@", 1)
 
         domain = "@" + domain_raw
 
-        allowed = ["@hi2.in", "@telemail.com"]
+        allowed_domains = [
+            "@hi2.in",
+            "@telemail.com"
+        ]
 
-        if domain not in allowed:
+        if domain not in allowed_domains:
             return {
                 "email": email,
-                "status": "INVALID_DOMAIN",
                 "generated": "",
-                "error": "Unsupported Domain"
+                "status": "INVALID_DOMAIN",
+                "error": "Unsupported domain"
             }
 
-        await page.click("button.tablinks:has-text('Customize')")
+        await page.click(
+            "button.tablinks:has-text('Customize')"
+        )
 
         await page.fill(
             "input.mailtext:not(.mailtextfix)",
@@ -126,31 +133,32 @@ async def check_email(page, email):
         )
 
         await page.select_option(
-    "select.selcss",
-    label=domain
-)
+            "select.selcss",
+            label=domain
+        )
 
-await page.locator("button.genbutton").click(timeout=10000)
+        await page.locator(
+            "button.genbutton"
+        ).click(timeout=10000)
 
-await asyncio.sleep(5)
+        await asyncio.sleep(5)
 
-generated = await page.input_value(
-    "input.mailtext.mailtextfix"
-)
+        generated = await page.input_value(
+            "input.mailtext.mailtextfix"
+        )
 
-generated = generated.strip().lower()
+        generated = generated.strip().lower()
 
-status = "NOT_AVAILABLE"
+        status = "NOT_AVAILABLE"
 
-if generated == email:
-    status = "AVAILABLE"
+        if generated == email:
+            status = "AVAILABLE"
 
-return {
-    "email": email,
-    "generated": generated,
-    "status": status,
-    "error": ""
-}
+        return {
+            "email": email,
+            "generated": generated,
+            "status": status,
+            "error": ""
         }
 
     except Exception as e:
@@ -162,7 +170,10 @@ return {
         }
 
 
-async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def process_emails(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
     text = update.message.text
 
     emails = [
@@ -172,7 +183,9 @@ async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     if not emails:
-        await update.message.reply_text("❌ No emails found.")
+        await update.message.reply_text(
+            "❌ No emails found."
+        )
         return
 
     progress = await update.message.reply_text(
@@ -183,6 +196,7 @@ async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 📧 Total: {len(emails)}
 ⚡ Progress: 0/{len(emails)}
+
 👑 {OWNER}
 """
     )
@@ -192,24 +206,24 @@ async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with async_playwright() as p:
 
         browser = await p.chromium.launch(
-    headless=True,
-    args=[
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-blink-features=AutomationControlled"
-    ]
-)
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled"
+            ]
+        )
 
-page = await browser.new_page()
+        page = await browser.new_page()
 
-await page.goto(
-    "https://hi2.in/#/",
-    wait_until="networkidle",
-    timeout=120000
-)
+        await page.goto(
+            "https://hi2.in/#/",
+            wait_until="networkidle",
+            timeout=120000
+        )
 
-await asyncio.sleep(8)
+        await asyncio.sleep(8)
 
         for index, email in enumerate(emails, start=1):
 
@@ -225,6 +239,7 @@ await asyncio.sleep(8)
 
 ⚡ Progress: {index}/{len(emails)}
 📧 Current: {email}
+
 👑 {OWNER}
 """
             )
@@ -257,18 +272,26 @@ await asyncio.sleep(8)
 ❌ NOT AVAILABLE: {len(not_available)}
 ⚠️ ERRORS: {len(errors)}
 
-👑 Owner: {OWNER}
+👑 {OWNER}
 """
 
     if available:
         final_text += "\n🔥 AVAILABLE EMAILS:\n\n"
         final_text += "\n".join(available[:50])
 
-    await update.message.reply_text(final_text[:4000])
+    await update.message.reply_text(
+        final_text[:4000]
+    )
 
     filename = "results.csv"
 
-    with open(filename, "w", newline="", encoding="utf-8") as f:
+    with open(
+        filename,
+        "w",
+        newline="",
+        encoding="utf-8"
+    ) as f:
+
         writer = csv.writer(f)
 
         writer.writerow([
@@ -287,6 +310,7 @@ await asyncio.sleep(8)
             ])
 
     with open(filename, "rb") as f:
+
         await update.message.reply_document(
             document=f,
             caption=f"📄 Full Results CSV\n👑 {OWNER}"
