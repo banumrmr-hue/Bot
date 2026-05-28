@@ -15,7 +15,6 @@ from telegram.ext import (
 from playwright.async_api import async_playwright
 
 BOT_TOKEN = os.getenv("BOT_TOKEN") or "YOUR_BOT_TOKEN"
-
 OWNER = "@c0dealx"
 
 WELCOME_TEXT = f"""
@@ -24,7 +23,7 @@ WELCOME_TEXT = f"""
 ╚══════════════════╝
 
 ⚡ Fast & Accurate Checker
-📧 Domains:
+📧 Supports:
 • @hi2.in
 • @telemail.com
 
@@ -33,8 +32,7 @@ WELCOME_TEXT = f"""
 Send emails line-by-line.
 
 Example:
-
-test@hi2.in
+abc@hi2.in
 hello@telemail.com
 """
 
@@ -50,12 +48,12 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
       COMMANDS
 ╚══════════════╝
 
-/start → Start Bot
-/help → Help Menu
-/ping → Bot Speed
-/about → Bot Info
+/start → Start bot
+/help → Help menu
+/ping → Bot speed
+/about → Bot info
 
-👑 {OWNER}
+👑 Owner: {OWNER}
 """
     )
 
@@ -63,13 +61,17 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_time = datetime.now()
 
-    msg = await update.message.reply_text("⚡ Checking speed...")
+    msg = await update.message.reply_text(
+        "⚡ Checking speed..."
+    )
 
     end_time = datetime.now()
 
     ms = (end_time - start_time).microseconds / 1000
 
-    await msg.edit_text(f"⚡ Speed: {ms:.0f} ms")
+    await msg.edit_text(
+        f"⚡ Bot Speed: {ms:.0f} ms"
+    )
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -80,9 +82,9 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ╚══════════════════╝
 
 🔥 Stylish HI2 Checker
-⚡ Accurate Detection
-📄 CSV Export
-🚀 Fast Checking
+⚡ Accurate Availability Detection
+📄 CSV Export Supported
+🚀 Fast Processing
 
 👑 Owner: {OWNER}
 """
@@ -98,7 +100,7 @@ async def check_email(page, email):
                 "email": email,
                 "generated": "",
                 "status": "INVALID",
-                "error": "Invalid email"
+                "error": "Invalid Email"
             }
 
         prefix, domain_raw = email.split("@", 1)
@@ -115,11 +117,16 @@ async def check_email(page, email):
                 "email": email,
                 "generated": "",
                 "status": "INVALID_DOMAIN",
-                "error": "Unsupported domain"
+                "error": "Unsupported Domain"
             }
 
         await page.click(
             "button.tablinks:has-text('Customize')"
+        )
+
+        await page.wait_for_selector(
+            "input.mailtext:not(.mailtextfix)",
+            timeout=15000
         )
 
         await page.fill(
@@ -137,9 +144,9 @@ async def check_email(page, email):
             label=domain
         )
 
-        await page.locator(
+        await page.click(
             "button.genbutton"
-        ).click(timeout=10000)
+        )
 
         await asyncio.sleep(5)
 
@@ -149,10 +156,10 @@ async def check_email(page, email):
 
         generated = generated.strip().lower()
 
-        status = "NOT_AVAILABLE"
-
         if generated == email:
             status = "AVAILABLE"
+        else:
+            status = "NOT_AVAILABLE"
 
         return {
             "email": email,
@@ -170,10 +177,8 @@ async def check_email(page, email):
         }
 
 
-async def process_emails(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     text = update.message.text
 
     emails = [
@@ -227,33 +232,26 @@ async def process_emails(
 
         for index, email in enumerate(emails, start=1):
 
-            result = await check_email(page, email)
+            result = await check_email(
+                page,
+                email
+            )
 
             results.append(result)
 
-            status_emoji = "⚠️"
-
-if result["status"] == "AVAILABLE":
-    status_emoji = "✅"
-
-elif result["status"] == "NOT_AVAILABLE":
-    status_emoji = "❌"
-
-await progress.edit_text(
-    f"""
+            await progress.edit_text(
+                f"""
 ╔════════════════╗
    CHECK RUNNING
 ╚════════════════╝
 
 ⚡ Progress: {index}/{len(emails)}
-
-📧 Email: {email}
-
-{status_emoji} Status: {result["status"]}
+📧 Current: {email}
 
 👑 {OWNER}
 """
-)
+            )
+
             await asyncio.sleep(1)
 
         await browser.close()
@@ -265,13 +263,19 @@ await progress.edit_text(
     for r in results:
 
         if r["status"] == "AVAILABLE":
-            available.append(r["email"])
+            available.append(
+                f"✅ {r['email']}"
+            )
 
         elif r["status"] == "NOT_AVAILABLE":
-            not_available.append(r["email"])
+            not_available.append(
+                f"❌ {r['email']}"
+            )
 
         else:
-            errors.append(r["email"])
+            errors.append(
+                f"⚠️ {r['email']}"
+            )
 
     final_text = f"""
 ╔══════════════════╗
@@ -282,12 +286,20 @@ await progress.edit_text(
 ❌ NOT AVAILABLE: {len(not_available)}
 ⚠️ ERRORS: {len(errors)}
 
-👑 {OWNER}
+👑 Owner: {OWNER}
 """
 
     if available:
         final_text += "\n🔥 AVAILABLE EMAILS:\n\n"
-        final_text += "\n".join(available[:50])
+        final_text += "\n".join(
+            available[:50]
+        )
+
+    if not_available:
+        final_text += "\n\n❌ TAKEN EMAILS:\n\n"
+        final_text += "\n".join(
+            not_available[:20]
+        )
 
     await update.message.reply_text(
         final_text[:4000]
@@ -312,6 +324,7 @@ await progress.edit_text(
         ])
 
         for r in results:
+
             writer.writerow([
                 r["email"],
                 r["generated"],
@@ -323,18 +336,35 @@ await progress.edit_text(
 
         await update.message.reply_document(
             document=f,
-            caption=f"📄 Full Results CSV\n👑 {OWNER}"
+            caption=f"""
+📄 Full Results CSV
+
+👑 {OWNER}
+"""
         )
 
     os.remove(filename)
 
 
-app = Application.builder().token(BOT_TOKEN).build()
+app = Application.builder().token(
+    BOT_TOKEN
+).build()
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("help", help_cmd))
-app.add_handler(CommandHandler("ping", ping))
-app.add_handler(CommandHandler("about", about))
+app.add_handler(
+    CommandHandler("start", start)
+)
+
+app.add_handler(
+    CommandHandler("help", help_cmd)
+)
+
+app.add_handler(
+    CommandHandler("ping", ping)
+)
+
+app.add_handler(
+    CommandHandler("about", about)
+)
 
 app.add_handler(
     MessageHandler(
