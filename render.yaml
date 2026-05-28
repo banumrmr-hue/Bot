@@ -1,0 +1,8 @@
+services:
+  - type: worker
+    name: hi2-checker-bot
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install chromium
+    startCommand: python bot.py
