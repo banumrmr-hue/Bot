@@ -1,2 +1,2 @@
-aiogram==3.26.0
-aiosqlite==0.18.0
+python-telegram-bot==22.7
+playwright==1.52.0
