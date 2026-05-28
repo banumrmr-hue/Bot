@@ -292,26 +292,20 @@ async def process_emails(update: Update, context: ContextTypes.DEFAULT_TYPE):
     os.remove(filename)
 
 
-async def main():
+app = Application.builder().token(BOT_TOKEN).build()
 
-    app = Application.builder().token(BOT_TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("help", help_cmd))
+app.add_handler(CommandHandler("ping", ping))
+app.add_handler(CommandHandler("about", about))
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_cmd))
-    app.add_handler(CommandHandler("ping", ping))
-    app.add_handler(CommandHandler("about", about))
-
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            process_emails
-        )
+app.add_handler(
+    MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        process_emails
     )
+)
 
-    print("BOT STARTED")
+print("BOT STARTED")
 
-    await app.run_polling()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+app.run_polling()
