@@ -231,19 +231,29 @@ async def process_emails(
 
             results.append(result)
 
-            await progress.edit_text(
-                f"""
+            status_emoji = "⚠️"
+
+if result["status"] == "AVAILABLE":
+    status_emoji = "✅"
+
+elif result["status"] == "NOT_AVAILABLE":
+    status_emoji = "❌"
+
+await progress.edit_text(
+    f"""
 ╔════════════════╗
    CHECK RUNNING
 ╚════════════════╝
 
 ⚡ Progress: {index}/{len(emails)}
-📧 Current: {email}
+
+📧 Email: {email}
+
+{status_emoji} Status: {result["status"]}
 
 👑 {OWNER}
 """
-            )
-
+)
             await asyncio.sleep(1)
 
         await browser.close()
