@@ -126,30 +126,31 @@ async def check_email(page, email):
         )
 
         await page.select_option(
-            "select.selcss",
-            label=domain
-        )
+    "select.selcss",
+    label=domain
+)
 
-        await page.locator("button.genbutton").click(timeout=10000)
+await page.locator("button.genbutton").click(timeout=10000)
 
 await asyncio.sleep(5)
 
-        generated = await page.input_value(
-            "input.mailtext.mailtextfix"
-        )
+generated = await page.input_value(
+    "input.mailtext.mailtextfix"
+)
 
-        generated = generated.strip().lower()
+generated = generated.strip().lower()
 
-        status = "NOT_AVAILABLE"
+status = "NOT_AVAILABLE"
 
-        if generated == email:
-            status = "AVAILABLE"
+if generated == email:
+    status = "AVAILABLE"
 
-        return {
-            "email": email,
-            "generated": generated,
-            "status": status,
-            "error": ""
+return {
+    "email": email,
+    "generated": generated,
+    "status": status,
+    "error": ""
+}
         }
 
     except Exception as e:
